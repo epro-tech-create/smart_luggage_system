@@ -47,13 +47,22 @@ CORS_ALLOWED_ORIGINS=http://localhost:5173
 
 ```bash
 cd frontend
-pnpm install
-pnpm run dev
+npm install
+npm run dev
 ```
 
 The frontend defaults to `http://localhost:8081/api`. Set `VITE_API_BASE_URL=...` if your backend runs elsewhere.
 
 When the backend is running, the frontend shows `API Live` in the header. If it shows `Demo Mode`, the UI is using local sample data because it cannot reach the API.
+
+Frontend source structure:
+
+- `src/main.jsx` - React mount only.
+- `src/App.jsx` - app state, routing, and workflow actions.
+- `src/api/` - API client and auth storage helpers.
+- `src/models/` - frontend models, constants, mappers, and status formatters.
+- `src/components/` - reusable layout, auth, and common UI components.
+- `src/pages/` - screen-level pages for dashboard, workflows, tracking, account, admin, and reports.
 
 ## Core Features
 

@@ -5,6 +5,9 @@ target/
 .vscode/
 *.log
 .env
+<<<<<<< HEAD
 *.class
 backend_build_check/
 *.class
+=======
+>>>>>>> 6ab1e484e3447b2a66acfd63431a929dc913ec19
