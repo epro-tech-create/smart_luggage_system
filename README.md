@@ -47,8 +47,8 @@ CORS_ALLOWED_ORIGINS=http://localhost:5173
 
 ```bash
 cd frontend
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 The frontend defaults to `http://localhost:8081/api`. Set `VITE_API_BASE_URL=...` if your backend runs elsewhere.
