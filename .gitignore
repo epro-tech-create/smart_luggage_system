@@ -6,3 +6,5 @@ target/
 *.log
 .env
 *.class
+backend_build_check/
+*.class
