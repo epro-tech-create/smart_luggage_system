@@ -56,11 +56,11 @@ public class LuggageService {
 
     @Transactional
     public LuggageResponse register(RegisterLuggageRequest request) {
-        return register(request, null);
+        return register(request, null, null);
     }
 
     @Transactional
-    public LuggageResponse register(RegisterLuggageRequest request, String ownerEmail) {
+    public LuggageResponse register(RegisterLuggageRequest request, String ownerEmail, String busCompany) {
         Luggage luggage = new Luggage();
         luggage.setTrackingCode("SLT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT));
         luggage.setQrCode("QR-" + UUID.randomUUID());
@@ -77,6 +77,7 @@ public class LuggageService {
         luggage.setBusNumber(request.busNumber());
         luggage.setRfidTag("RFID-" + UUID.randomUUID().toString().substring(0, 10).toUpperCase(Locale.ROOT));
         luggage.setOwnerEmail(ownerEmail);
+        luggage.setBusCompany(busCompany);
 
         Luggage saved = luggageRepository.save(luggage);
         addEvent(saved, EventType.REGISTERED, saved.getOriginTerminal(),
@@ -89,6 +90,22 @@ public class LuggageService {
     @Transactional(readOnly = true)
     public List<LuggageResponse> list() {
         return luggageRepository.findAll().stream().map(luggageMapper::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<LuggageResponse> listForOwner(String ownerEmail) {
+        return luggageRepository.findByOwnerEmailIgnoreCase(ownerEmail).stream().map(luggageMapper::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<LuggageResponse> listForCompany(String busCompany) {
+        return luggageRepository.findByBusCompanyIgnoreCase(busCompany).stream().map(luggageMapper::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<LuggageResponse> listForTerminal(String busCompany, String terminal) {
+        return luggageRepository.findByBusCompanyIgnoreCaseAndCurrentTerminalIgnoreCase(busCompany, terminal)
+                .stream().map(luggageMapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
@@ -134,6 +151,9 @@ public class LuggageService {
     @Transactional
     public LuggageResponse dispatch(String trackingCode) {
         Luggage luggage = getByTrackingCode(trackingCode);
+        if (luggage.getStatus() != LuggageStatus.PAID) {
+            throw new IllegalArgumentException("Only paid luggage can be dispatched.");
+        }
         luggage.setStatus(LuggageStatus.IN_TRANSIT);
         luggage.touch();
         addEvent(luggage, EventType.DEPARTED, luggage.getCurrentTerminal(),
@@ -146,6 +166,9 @@ public class LuggageService {
     @Transactional
     public LuggageResponse scanStop(String trackingCode, MoveLuggageRequest request) {
         Luggage luggage = getByTrackingCode(trackingCode);
+        if (luggage.getStatus() != LuggageStatus.IN_TRANSIT) {
+            throw new IllegalArgumentException("Only luggage in transit can be processed on arrival.");
+        }
         luggage.setCurrentTerminal(request.terminal());
         boolean arrived = request.terminal().equalsIgnoreCase(luggage.getDestinationTerminal());
         if (arrived) {
@@ -168,6 +191,9 @@ public class LuggageService {
     @Transactional
     public LuggageResponse verifyPickup(String trackingCode, PickupVerificationRequest request) {
         Luggage luggage = getByTrackingCode(trackingCode);
+        if (luggage.getStatus() != LuggageStatus.ARRIVED) {
+            throw new IllegalArgumentException("Luggage is not ready for pickup.");
+        }
         boolean validPin = luggage.getPickupPin().equals(request.pickupPin());
         boolean validPhone = luggage.getReceiverPhone().equals(request.receiverPhone());
         if (!validPin || !validPhone) {
@@ -193,6 +219,18 @@ public class LuggageService {
                 luggageRepository.countByStatus(LuggageStatus.VERIFIED_PICKUP),
                 paymentRepository.countByStatus(PaymentStatus.CONFIRMED),
                 revenue == null ? BigDecimal.ZERO : revenue);
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardStats dashboardStatsFor(List<LuggageResponse> luggage) {
+        return new DashboardStats(
+                luggage.size(),
+                luggage.stream().filter(item -> item.status() == LuggageStatus.IN_TRANSIT).count(),
+                luggage.stream().filter(item -> item.status() == LuggageStatus.ARRIVED).count(),
+                luggage.stream().filter(item -> item.status() == LuggageStatus.WRONG_DESTINATION_ALERT).count(),
+                luggage.stream().filter(item -> item.status() == LuggageStatus.VERIFIED_PICKUP).count(),
+                0,
+                BigDecimal.ZERO);
     }
 
     private Luggage getByTrackingCode(String trackingCode) {

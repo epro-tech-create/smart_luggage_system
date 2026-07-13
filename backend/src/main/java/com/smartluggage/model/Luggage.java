@@ -62,6 +62,7 @@ public class Luggage {
     private String busNumber;
     private String rfidTag;
     private String ownerEmail;
+    private String busCompany;
 
     @Enumerated(EnumType.STRING)
     private LuggageStatus status = LuggageStatus.REGISTERED;
@@ -198,6 +199,9 @@ public class Luggage {
     public void setOwnerEmail(String ownerEmail) {
         this.ownerEmail = ownerEmail;
     }
+
+    public String getBusCompany() { return busCompany; }
+    public void setBusCompany(String busCompany) { this.busCompany = busCompany; }
 
     public LuggageStatus getStatus() {
         return status;

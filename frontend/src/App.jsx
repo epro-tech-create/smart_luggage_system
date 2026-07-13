@@ -27,7 +27,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(() => readStoredAuth());
   const [authMode, setAuthMode] = useState('login');
   const [authError, setAuthError] = useState('');
-  const [authForm, setAuthForm] = useState({ fullName: '', email: '', phoneNumber: '', password: '' });
+  const [authForm, setAuthForm] = useState({ fullName: '', email: '', phoneNumber: '', password: '', selectedRole: 'CUSTOMER' });
   const [screen, setScreen] = useState('dashboard');
   const [rows, setRows] = useState(demoRows);
   const [apiRows, setApiRows] = useState([]);
@@ -66,7 +66,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (currentUser?.role !== 'ADMIN') {
+    if (currentUser?.role !== 'SUPER_ADMINISTRATOR') {
       setAdminOverview(null);
       if (screen === 'admin') setScreen('dashboard');
       return;
@@ -137,12 +137,14 @@ export default function App() {
     setAuthError('');
     try {
       const path = authMode === 'login' ? '/auth/login' : '/auth/register';
-      const payload = authMode === 'login' ? { email: authForm.email, password: authForm.password } : authForm;
+      const payload = authMode === 'login'
+        ? { email: authForm.email, password: authForm.password, selectedRole: authForm.selectedRole }
+        : authForm;
       const auth = await apiRequest(path, { method: 'POST', body: JSON.stringify(payload) });
       setCurrentUser(auth);
       saveStoredAuth(auth);
       setToast(`Welcome, ${auth.fullName}`);
-      setScreen(auth.role === 'ADMIN' ? 'admin' : 'dashboard');
+      setScreen('dashboard');
     } catch (error) {
       setAuthError(error.message);
     }
@@ -158,8 +160,14 @@ export default function App() {
   }
 
   function navigate(next) {
-    if (next === 'admin' && currentUser?.role !== 'ADMIN') {
-      setToast('Admin access required.');
+    const permitted = new Set({
+      SUPER_ADMINISTRATOR: ['dashboard', 'admin', 'reports', 'notifications'],
+      BUS_COMPANY_ADMINISTRATOR: ['dashboard', 'tracking', 'verify', 'reports', 'notifications'],
+      TERMINAL_OFFICER: ['dashboard', 'weigh', 'register', 'verify', 'pickup', 'notifications'],
+      CUSTOMER: ['dashboard', 'register', 'payment', 'tracking', 'account', 'notifications']
+    }[currentUser?.role] || []);
+    if (!permitted.has(next)) {
+      setToast('This page is not available for your role.');
       return;
     }
     setScreen(next);
@@ -279,7 +287,7 @@ export default function App() {
       <div className="main-column">
         <PageHeader screen={screen} search={search} setSearch={setSearch} now={now} apiOnline={apiOnline} user={currentUser} onLogout={logout} />
         <main className="content-area">
-          {screen === 'dashboard' && <Dashboard rows={visibleRows} stats={apiStats} onNavigate={navigate} now={now} />}
+          {screen === 'dashboard' && <Dashboard rows={visibleRows} stats={apiStats} onNavigate={navigate} now={now} user={currentUser} />}
           {screen === 'weigh' && <WeighScreen weight={weight} setWeight={setWeight} category={category} setCategory={setCategory} totalDue={totalDue} onNavigate={navigate} />}
           {screen === 'confirm' && <ConfirmScreen weight={weight} category={category} totalDue={totalDue} confirmed={confirmed} setConfirmed={setConfirmed} onNavigate={navigate} />}
           {screen === 'register' && <RegisterScreen form={form} setForm={setForm} weight={weight} category={category} totalDue={totalDue} onSubmit={registerLuggage} onNavigate={navigate} />}

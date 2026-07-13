@@ -37,8 +37,8 @@ public class AdminController {
     public AdminOverview overview(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
         var user = authService.findByAuthorization(authorization)
                 .orElseThrow(() -> new IllegalArgumentException("Admin login required."));
-        if (user.getRole() != UserRole.ADMIN) {
-            throw new IllegalArgumentException("Admin access required.");
+        if (user.getRole() != UserRole.SUPER_ADMINISTRATOR) {
+            throw new SecurityException("Super Administrator access required.");
         }
         BigDecimal revenue = paymentRepository.confirmedRevenue();
         return new AdminOverview(

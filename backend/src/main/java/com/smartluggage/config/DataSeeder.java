@@ -10,14 +10,18 @@ import com.smartluggage.service.LuggageService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 
 @Configuration
 public class DataSeeder {
     @Bean
+    @Order(10)
     CommandLineRunner seedDemoData(LuggageRepository luggageRepository, LuggageService luggageService, AuthService authService) {
         return args -> {
-            authService.seedAccount("Zawadi Msongo", "admin@safiribag.co.tz", "+255700000001", "admin123", UserRole.ADMIN);
-            authService.seedAccount("Amina Juma Bakari", "user@safiribag.co.tz", "+255700000002", "user123", UserRole.USER);
+            authService.seedAccount("Zawadi Msongo", "superadmin@safiribag.co.tz", "+255700000001", "admin123", UserRole.SUPER_ADMINISTRATOR, null, null);
+            authService.seedAccount("Baraka Transport", "company@safiribag.co.tz", "+255700000003", "company123", UserRole.BUS_COMPANY_ADMINISTRATOR, "Safiri Express", null);
+            authService.seedAccount("Patrick Mmari", "officer@safiribag.co.tz", "+255700000004", "officer123", UserRole.TERMINAL_OFFICER, "Safiri Express", "Dar es Salaam - Magufuli Terminal");
+            authService.seedAccount("Amina Juma Bakari", "user@safiribag.co.tz", "+255700000002", "user123", UserRole.CUSTOMER, null, null);
 
             if (luggageRepository.count() > 0) {
                 return;

@@ -13,7 +13,7 @@ export function AuthScreen({ mode, setMode, form, setForm, error, onSubmit }) {
           </div>
           <div className="auth-copy">
             <h1>{isRegister ? 'Create your luggage account' : 'Login to continue'}</h1>
-            <p>Secure access keeps each user linked to their own luggage records, while admins can manage the full terminal system.</p>
+            <p>Secure, role-scoped access for passengers, terminal officers, company operations, and system administration.</p>
           </div>
         </div>
         <form className="auth-card" onSubmit={onSubmit}>
@@ -24,12 +24,17 @@ export function AuthScreen({ mode, setMode, form, setForm, error, onSubmit }) {
           {isRegister && <FormInput label="Full Name" value={form.fullName} placeholder="e.g. Amina Juma Bakari" onChange={(v) => setForm({ ...form, fullName: v })} />}
           <FormInput label="Email Address" type="email" value={form.email} placeholder="you@example.com" onChange={(v) => setForm({ ...form, email: v })} />
           {isRegister && <FormInput label="Phone Number" value={form.phoneNumber} placeholder="+255 7XX XXX XXX" onChange={(v) => setForm({ ...form, phoneNumber: v })} />}
-          <FormInput label="Password" type="password" value={form.password} placeholder="Minimum 6 characters" onChange={(v) => setForm({ ...form, password: v })} />
+           <FormInput label="Password" type="password" value={form.password} placeholder="Minimum 6 characters" onChange={(v) => setForm({ ...form, password: v })} />
+          {!isRegister && <label className="form-field"><span>Login as</span><select value={form.selectedRole} onChange={(event) => setForm({ ...form, selectedRole: event.target.value })}>{[
+            ['CUSTOMER', 'Customer / Passenger'], ['TERMINAL_OFFICER', 'Terminal Officer / Luggage Attendant'], ['BUS_COMPANY_ADMINISTRATOR', 'Bus Company Administrator'], ['SUPER_ADMINISTRATOR', 'Super Administrator']
+          ].map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>}
           {error && <p className="auth-error">{error}</p>}
           <button className="solid-button full">{isRegister ? 'Create Account' : 'Login'}</button>
           <div className="demo-logins">
-            <span>Demo admin: admin@safiribag.co.tz / admin123</span>
-            <span>Demo user: user@safiribag.co.tz / user123</span>
+            <span>Customer: user@safiribag.co.tz / user123</span>
+            <span>Officer: officer@safiribag.co.tz / officer123</span>
+            <span>Company: company@safiribag.co.tz / company123</span>
+            <span>Super admin: superadmin@safiribag.co.tz / admin123</span>
           </div>
         </form>
       </section>

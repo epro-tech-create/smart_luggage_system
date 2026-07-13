@@ -30,9 +30,13 @@ public class UserAccount {
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
-    private UserRole role = UserRole.USER;
+    private UserRole role = UserRole.CUSTOMER;
 
     private String phoneNumber;
+    // Scope assignments are enforced by services; they are not client-provided claims.
+    private String busCompany;
+    private String assignedTerminal;
+    private Boolean active = true;
     private String sessionToken;
     private Instant tokenCreatedAt;
     private Instant lastLoginAt;
@@ -81,6 +85,13 @@ public class UserAccount {
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
+
+    public String getBusCompany() { return busCompany; }
+    public void setBusCompany(String busCompany) { this.busCompany = busCompany; }
+    public String getAssignedTerminal() { return assignedTerminal; }
+    public void setAssignedTerminal(String assignedTerminal) { this.assignedTerminal = assignedTerminal; }
+    public boolean isActive() { return active == null || active; }
+    public void setActive(boolean active) { this.active = active; }
 
     public String getSessionToken() {
         return sessionToken;

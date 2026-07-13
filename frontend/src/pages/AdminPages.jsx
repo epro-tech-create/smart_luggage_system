@@ -46,7 +46,7 @@ export function AccountScreen({ user, rows }) {
   const ownedRows = rows.filter((row) => !row.ownerEmail || row.ownerEmail === user.email);
   return (
     <div className="account-page narrow">
-      <div className="page-title-row"><div><h1>My Luggage</h1><p>{user.email} - {user.role === 'ADMIN' ? 'admin account' : 'personal account'}</p></div></div>
+      <div className="page-title-row"><div><h1>My Luggage</h1><p>{user.email} - personal passenger account</p></div></div>
       <div className="stats-row">
         <Stat icon={<Package />} label="MY ITEMS" value={ownedRows.length} note="Linked to this login" />
         <Stat icon={<Truck />} color="blue" label="IN TRANSIT" value={ownedRows.filter((row) => row.status === 'In Transit').length} note="Currently moving" />
@@ -60,7 +60,7 @@ export function AccountScreen({ user, rows }) {
 export function AdminScreen({ overview }) {
   return (
     <div className="admin-page">
-      <div className="page-title-row"><div><h1>Admin Dashboard</h1><p>System management - Dar es Salaam Terminal</p></div></div>
+      <div className="page-title-row"><div><h1>Super Administrator Dashboard</h1><p>System-wide users, payments, devices, and security oversight</p></div></div>
       <div className="stats-row">
         <Stat icon={<User />} color="blue" label="TOTAL USERS" value={overview?.totalUsers || '...'} />
         <Stat icon={<Package />} label="TOTAL LUGGAGE" value={overview?.totalLuggage || '...'} />

@@ -23,7 +23,7 @@ cd backend
 .\run-postgres.ps1
 ```
 
-The script prompts for your PostgreSQL password and starts the API on `http://localhost:8081`.
+The script prompts for your PostgreSQL password and starts the API on `http://localhost:8089`.
 
 For quick local testing without PostgreSQL, use the H2 dev profile:
 
@@ -32,14 +32,14 @@ cd backend
 & 'C:\Program Files\Apache\Maven\apache-maven-3.9.16\bin\mvn.cmd' spring-boot:run '-Dspring-boot.run.profiles=dev'
 ```
 
-The dev profile exposes the H2 console at `http://localhost:8081/h2-console`.
+The dev profile exposes the H2 console at `http://localhost:8089/h2-console`.
 
 Environment variables:
 
 ```bash
 DB_URL=jdbc:postgresql://localhost:5432/smart_luggage_system
 DB_USERNAME=postgres
-DB_PASSWORD=postgres
+DB_PASSWORD=zzql@1234
 CORS_ALLOWED_ORIGINS=http://localhost:5173
 ```
 
@@ -47,11 +47,11 @@ CORS_ALLOWED_ORIGINS=http://localhost:5173
 
 ```bash
 cd frontend
-pnpm install
-pnpm run dev
+npm install
+npm run dev
 ```
 
-The frontend defaults to `http://localhost:8081/api`. Set `VITE_API_BASE_URL=...` if your backend runs elsewhere.
+The frontend defaults to `http://localhost:8089/api`. Set `VITE_API_BASE_URL=...` if your backend runs elsewhere.
 
 When the backend is running, the frontend shows `API Live` in the header. If it shows `Demo Mode`, the UI is using local sample data because it cannot reach the API.
 

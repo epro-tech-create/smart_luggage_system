@@ -35,7 +35,7 @@ public class AuthService {
         user.setEmail(email);
         user.setPhoneNumber(request.phoneNumber());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
-        user.setRole(UserRole.USER);
+        user.setRole(UserRole.CUSTOMER);
         issueToken(user);
         return toResponse(userAccountRepository.save(user));
     }
@@ -46,6 +46,20 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new IllegalArgumentException("Invalid email or password.");
+        }
+        if (!user.isActive()) {
+            throw new IllegalArgumentException("This account is inactive. Contact your administrator.");
+        }
+        UserRole selectedRole = user.getRole();
+        if (request.selectedRole() != null && !request.selectedRole().isBlank()) {
+            try {
+                selectedRole = UserRole.valueOf(request.selectedRole().trim().toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException exception) {
+                throw new IllegalArgumentException("The selected role is not valid.");
+            }
+        }
+        if (user.getRole() != selectedRole) {
+            throw new IllegalArgumentException("The selected role is not assigned to this account.");
         }
         issueToken(user);
         return toResponse(userAccountRepository.save(user));
@@ -68,7 +82,7 @@ public class AuthService {
     }
 
     @Transactional
-    public void seedAccount(String fullName, String email, String phone, String password, UserRole role) {
+    public void seedAccount(String fullName, String email, String phone, String password, UserRole role, String busCompany, String terminal) {
         if (userAccountRepository.existsByEmailIgnoreCase(email)) {
             return;
         }
@@ -78,20 +92,32 @@ public class AuthService {
         user.setPhoneNumber(phone);
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setRole(role);
+        user.setBusCompany(busCompany);
+        user.setAssignedTerminal(terminal);
         userAccountRepository.save(user);
+    }
+
+    public UserAccount requireAuthenticated(String authorization) {
+        UserAccount user = findByAuthorization(authorization)
+                .orElseThrow(() -> new SecurityException("Authentication is required."));
+        if (!user.isActive()) {
+            throw new SecurityException("This account is inactive.");
+        }
+        return user;
+    }
+
+    public UserAccount requireRole(String authorization, UserRole... roles) {
+        UserAccount user = requireAuthenticated(authorization);
+        for (UserRole role : roles) {
+            if (user.getRole() == role) return user;
+        }
+        throw new SecurityException("You do not have permission for this action.");
     }
 
     private void issueToken(UserAccount user) {
         user.setSessionToken(UUID.randomUUID().toString());
         user.setTokenCreatedAt(Instant.now());
         user.setLastLoginAt(Instant.now());
-    }
-
-    private UserRole resolveRole(String role) {
-        if (role == null || role.isBlank()) {
-            return UserRole.USER;
-        }
-        return "ADMIN".equalsIgnoreCase(role.trim()) ? UserRole.ADMIN : UserRole.USER;
     }
 
     private String bearerToken(String authorization) {
@@ -108,6 +134,8 @@ public class AuthService {
                 user.getEmail(),
                 user.getPhoneNumber(),
                 user.getRole(),
+                user.getBusCompany(),
+                user.getAssignedTerminal(),
                 user.getSessionToken(),
                 user.getLastLoginAt());
     }

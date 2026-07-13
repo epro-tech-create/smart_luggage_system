@@ -9,6 +9,8 @@ public record AuthResponse(
         String email,
         String phoneNumber,
         UserRole role,
+        String busCompany,
+        String assignedTerminal,
         String token,
         Instant lastLoginAt
 ) {

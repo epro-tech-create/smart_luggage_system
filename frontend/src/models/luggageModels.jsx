@@ -45,6 +45,45 @@ export const navItems = [
   { key: 'reports', label: 'Reports', icon: BarChart3 }
 ];
 
+export const roleLabels = {
+  SUPER_ADMINISTRATOR: 'Super Administrator',
+  BUS_COMPANY_ADMINISTRATOR: 'Bus Company Administrator',
+  TERMINAL_OFFICER: 'Terminal Officer',
+  CUSTOMER: 'Customer / Passenger'
+};
+
+export const navByRole = {
+  SUPER_ADMINISTRATOR: [
+    { key: 'dashboard', label: 'System Dashboard', icon: Home },
+    { key: 'admin', label: 'Users & System', icon: Grid2X2 },
+    { key: 'reports', label: 'Global Reports', icon: BarChart3 },
+    { key: 'notifications', label: 'Security Alerts', icon: Bell, count: 3 }
+  ],
+  BUS_COMPANY_ADMINISTRATOR: [
+    { key: 'dashboard', label: 'Operations Dashboard', icon: Home },
+    { key: 'tracking', label: 'Company Luggage', icon: LocateFixed },
+    { key: 'verify', label: 'Scan & Exceptions', icon: QrCode },
+    { key: 'reports', label: 'Company Reports', icon: BarChart3 },
+    { key: 'notifications', label: 'Incidents', icon: Bell, count: 3 }
+  ],
+  TERMINAL_OFFICER: [
+    { key: 'dashboard', label: 'Terminal Desk', icon: Home },
+    { key: 'weigh', label: 'Weigh Luggage', icon: Weight },
+    { key: 'register', label: 'Intake & Tagging', icon: Box },
+    { key: 'verify', label: 'QR / RFID Scan', icon: QrCode },
+    { key: 'pickup', label: 'Pickup Verification', icon: KeyRound },
+    { key: 'notifications', label: 'Assigned Incidents', icon: Bell, count: 3 }
+  ],
+  CUSTOMER: [
+    { key: 'dashboard', label: 'My Dashboard', icon: Home },
+    { key: 'register', label: 'Register Luggage', icon: Box },
+    { key: 'payment', label: 'Payments', icon: Wallet },
+    { key: 'tracking', label: 'Track Luggage', icon: LocateFixed },
+    { key: 'account', label: 'My Account', icon: User },
+    { key: 'notifications', label: 'Notifications', icon: Bell, count: 3 }
+  ]
+};
+
 export function mapApiRows(apiRows) {
   return apiRows.map((row) => ({
     id: row.trackingCode,

@@ -22,6 +22,7 @@ public record LuggageResponse(
         String busNumber,
         String rfidTag,
         String ownerEmail,
+        String busCompany,
         LuggageStatus status,
         Instant createdAt,
         Instant updatedAt,
