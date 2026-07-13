@@ -368,9 +368,19 @@ p {
   align-items: center;
   gap: 10px;
   margin: auto 14px 12px;
+  border: 0;
   border-radius: 8px;
   padding: 10px;
+  color: inherit;
   background: rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  text-align: left;
+}
+
+.profile-card:hover,
+.profile-card:focus-visible {
+  background: rgba(255, 255, 255, 0.11);
+  outline: 0;
 }
 
 .logout-icon,
@@ -494,12 +504,37 @@ p {
 
 .bell-button span {
   position: absolute;
-  top: 3px;
-  right: 14px;
-  width: 10px;
-  height: 10px;
+  top: 0;
+  right: 8px;
+  min-width: 17px;
   border-radius: 50%;
+  padding: 1px 5px;
+  color: #fff;
   background: var(--red);
+  font-size: 10px;
+  line-height: 15px;
+  text-align: center;
+}
+
+.header-user-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-left: 1px solid var(--line);
+  padding: 0 2px 0 16px;
+  color: #00150b;
+  background: transparent;
+}
+
+.header-user-button:hover strong,
+.header-user-button:focus-visible strong {
+  color: var(--green);
+}
+
+.header-user-button:focus-visible {
+  outline: 2px solid rgba(22, 109, 42, 0.25);
+  outline-offset: 4px;
 }
 
 .terminal-strip {
@@ -1250,6 +1285,91 @@ input[type="range"] {
 .form-field select:focus {
   border-color: var(--green);
   box-shadow: 0 0 0 3px rgba(22, 109, 42, 0.12);
+}
+
+.account-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.account-editor {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+}
+
+.account-editor h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+
+.account-contact-strip {
+  display: grid;
+  gap: 8px;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f2f7f3;
+  color: #516558;
+  font-size: 12px;
+}
+
+.account-contact-strip span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+.form-actions > span {
+  min-height: 18px;
+  color: var(--green);
+  font-size: 12px;
+}
+
+.account-records {
+  min-width: 0;
+}
+
+.account-empty {
+  min-height: 270px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  padding: 34px;
+  text-align: center;
+  color: #516558;
+}
+
+.account-empty svg {
+  color: var(--green);
+}
+
+.account-empty h2 {
+  margin: 0;
+  color: #00150b;
+  font-size: 18px;
+}
+
+.account-empty p {
+  max-width: 380px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
 }
 
 .toggle-row {
@@ -2040,6 +2160,24 @@ input[type="range"] {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
+.notification-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 28px;
+  color: #52665a;
+  text-align: center;
+}
+
+.notification-empty svg {
+  color: var(--green);
+}
+
+.notification-empty p {
+  margin: 0;
+  font-size: 13px;
+}
+
 .list-panel {
   padding: 0;
   overflow: hidden;
@@ -2271,6 +2409,18 @@ input[type="range"] {
     padding: 22px 32px;
   }
 
+  .header-tools {
+    gap: 10px;
+  }
+
+  .search-box {
+    width: 190px;
+  }
+
+  .header-user-button strong {
+    display: none;
+  }
+
   .workflow-page {
     margin: -22px -32px 0;
   }
@@ -2282,6 +2432,7 @@ input[type="range"] {
   .dashboard-grid,
   .reports-grid,
   .admin-grid,
+  .account-layout,
   .tracking-layout {
     grid-template-columns: 1fr;
   }

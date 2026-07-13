@@ -4,6 +4,7 @@ import { initials, navByRole, roleLabels } from '../../models/luggageModels.jsx'
 
 export function Sidebar({ active, onNavigate, unreadCount, user, onLogout }) {
   const visibleItems = navByRole[user?.role] || [];
+  const profileTarget = user?.role === 'CUSTOMER' ? 'account' : user?.role === 'SUPER_ADMINISTRATOR' ? 'admin' : 'dashboard';
   return (
     <aside className="sidebar">
       <div className="brand-row">
@@ -19,16 +20,16 @@ export function Sidebar({ active, onNavigate, unreadCount, user, onLogout }) {
               <button className={`nav-item ${active === item.key ? 'active' : ''}`} onClick={() => onNavigate(item.key)}>
                 <Icon size={19} />
                 <span>{item.label}</span>
-                {item.count && <b>{unreadCount}</b>}
+                {item.count && unreadCount > 0 && <b>{unreadCount}</b>}
               </button>
             </React.Fragment>
           );
         })}
       </nav>
-      <div className="profile-card">
+      <div className="profile-card" onClick={() => onNavigate(profileTarget)} onKeyDown={(event) => { if (event.key === 'Enter') onNavigate(profileTarget); }} role="button" tabIndex={0} title="Open account details">
         <div className="avatar">{initials(user?.fullName)}</div>
         <div><strong>{user?.fullName}</strong><span>{roleLabels[user?.role] || 'Account'}</span></div>
-        <button className="logout-icon" onClick={onLogout} title="Logout"><LogOut size={18} /></button>
+        <button className="logout-icon" onClick={(event) => { event.stopPropagation(); onLogout(); }} title="Logout"><LogOut size={18} /></button>
       </div>
     </aside>
   );

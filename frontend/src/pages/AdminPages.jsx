@@ -4,7 +4,10 @@ import {
   BarChart3,
   Download,
   KeyRound,
+  Mail,
   Package,
+  Phone,
+  Save,
   Settings,
   Shield,
   Truck,
@@ -16,43 +19,72 @@ import {
 import { RecentTable, RevenuePanel } from '../components/common/ProcessWidgets.jsx';
 import { Stat } from '../components/common/Stats.jsx';
 
-export function NotificationsScreen({ filter, setFilter }) {
-  const [notes, setNotes] = useState([
-    { type: 'Arrival', title: 'Luggage Arrived', text: 'TZ-2024-00891 arrived at Arusha Terminal - Amina Juma Bakari', time: '2 min ago', icon: Truck, unread: true },
-    { type: 'Payment', title: 'Payment Confirmed', text: 'M-Pesa TSh 14,100 confirmed for Amina Juma Bakari', time: '5 min ago', icon: Wallet, unread: true },
-    { type: 'Alert', title: 'Unclaimed Luggage', text: 'TZ-2024-00879 unclaimed for 4 hours at Dodoma Terminal', time: '18 min ago', icon: AlertTriangle, unread: true },
-    { type: 'Alert', title: 'Misplaced Luggage', text: 'RF-M3N4 (TZ-2024-00876) detected on wrong bus KK-2208', time: '35 min ago', icon: AlertTriangle },
-    { type: 'Arrival', title: 'Bus Departed', text: 'Bus DX-4521 departed DSM Terminal - 34 bags on board', time: '1 hr ago', icon: Truck },
-    { type: 'Payment', title: 'Payment Failed', text: 'Tigo Pesa payment failed for Ibrahim Mushi - retry required', time: '1 hr ago', icon: Wallet },
-    { type: 'System', title: 'RFID Scanner Offline', text: 'RFID scanner at Gate 3 offline - maintenance requested', time: '2 hrs ago', icon: Settings }
-  ]);
+export function NotificationsScreen({ filter, setFilter, notifications, onRead, onReadAll }) {
+  const notes = notifications.map((note) => ({ ...note, icon: { Arrival: Truck, Payment: Wallet, Alert: AlertTriangle, System: Settings }[note.type] || Settings }));
   const shown = filter === 'All' ? notes : notes.filter((note) => note.type === filter);
 
   return (
     <div className="notifications-page">
-      <div className="notifications-head"><div><h1>Notifications</h1><p>{notes.filter((note) => note.unread).length} unread</p></div><button onClick={() => setNotes(notes.map((note) => ({ ...note, unread: false })))}>Mark all read</button></div>
+      <div className="notifications-head"><div><h1>Notifications</h1><p>{notes.filter((note) => note.unread).length} unread</p></div><button onClick={onReadAll}>Mark all read</button></div>
       <div className="filter-row">{['All', 'Arrival', 'Payment', 'Alert', 'System'].map((item) => <button className={filter === item ? 'active' : ''} key={item} onClick={() => setFilter(item)}>{item}</button>)}</div>
       <div className="notification-list">
         {shown.map((note) => {
           const Icon = note.icon;
-          return <button className={`notification-card ${!note.unread ? 'muted' : ''}`} key={note.title} onClick={() => setNotes(notes.map((item) => item.title === note.title ? { ...item, unread: false } : item))}><span className={note.type.toLowerCase()}><Icon size={20} /></span><div><strong>{note.title}</strong>{note.unread && <b />}<p>{note.text}</p></div><small>{note.time}</small></button>;
+          return <button className={`notification-card ${!note.unread ? 'muted' : ''}`} key={note.id} onClick={() => onRead(note.id)}><span className={note.type.toLowerCase()}><Icon size={20} /></span><div><strong>{note.title}</strong>{note.unread && <b />}<p>{note.text}</p></div><small>{note.time}</small></button>;
         })}
+        {!shown.length && <div className="card notification-empty"><Settings size={24} /><strong>No notifications</strong><p>New luggage events, payment updates, and alerts will appear here automatically.</p></div>}
       </div>
     </div>
   );
 }
 
-export function AccountScreen({ user, rows }) {
-  const ownedRows = rows.filter((row) => !row.ownerEmail || row.ownerEmail === user.email);
+export function AccountScreen({ user, rows, onSave, saving }) {
+  const [form, setForm] = useState({ fullName: user.fullName || '', email: user.email || '', phoneNumber: user.phoneNumber || '', password: '' });
+  const [message, setMessage] = useState('');
+  const ownedRows = rows.filter((row) => row.ownerEmail?.toLowerCase() === user.email?.toLowerCase());
+
+  async function submitAccount(event) {
+    event.preventDefault();
+    setMessage('');
+    try {
+      await onSave({
+        fullName: form.fullName,
+        email: form.email,
+        phoneNumber: form.phoneNumber,
+        password: form.password || null
+      });
+      setForm((current) => ({ ...current, password: '' }));
+      setMessage('Saved');
+    } catch (error) {
+      setMessage(error.message || 'Could not save changes');
+    }
+  }
+
   return (
     <div className="account-page narrow">
-      <div className="page-title-row"><div><h1>My Luggage</h1><p>{user.email} - personal passenger account</p></div></div>
+      <div className="page-title-row"><div><h1>My Account</h1><p>{user.email} - personal passenger account</p></div></div>
       <div className="stats-row">
         <Stat icon={<Package />} label="MY ITEMS" value={ownedRows.length} note="Linked to this login" />
         <Stat icon={<Truck />} color="blue" label="IN TRANSIT" value={ownedRows.filter((row) => row.status === 'In Transit').length} note="Currently moving" />
         <Stat icon={<KeyRound />} label="PICKUPS" value={ownedRows.filter((row) => row.status === 'Pending Pickup').length} note="PIN required" />
       </div>
-      <RecentTable rows={ownedRows.length ? ownedRows : rows.slice(0, 3)} />
+      <div className="account-layout">
+        <form className="card account-editor" onSubmit={submitAccount}>
+          <h2><User size={20} />Credentials</h2>
+          <label className="form-field"><span>Full name</span><input value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} required /></label>
+          <label className="form-field"><span>Email address</span><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required /></label>
+          <label className="form-field"><span>Phone number</span><input value={form.phoneNumber} onChange={(event) => setForm({ ...form, phoneNumber: event.target.value })} placeholder="+255 7XX XXX XXX" /></label>
+          <label className="form-field"><span>New password</span><input type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} placeholder="Leave blank to keep current" minLength={6} /></label>
+          <div className="account-contact-strip">
+            <span><Mail size={16} />{user.email}</span>
+            <span><Phone size={16} />{user.phoneNumber || 'No phone saved'}</span>
+          </div>
+          <div className="form-actions"><span>{message}</span><button className="solid-button" disabled={saving}><Save size={17} />{saving ? 'Saving...' : 'Save Changes'}</button></div>
+        </form>
+        <div className="account-records">
+          {ownedRows.length ? <RecentTable rows={ownedRows} /> : <div className="card account-empty"><Package size={28} /><h2>No luggage linked yet</h2><p>When you register luggage from this account, only your own tracking records will appear here.</p></div>}
+        </div>
+      </div>
     </div>
   );
 }

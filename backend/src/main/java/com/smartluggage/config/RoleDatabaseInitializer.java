@@ -27,6 +27,7 @@ public class RoleDatabaseInitializer implements CommandLineRunner {
     private void repairUserAccountSchema() {
         jdbcTemplate.execute("ALTER TABLE IF EXISTS user_accounts DROP CONSTRAINT IF EXISTS user_accounts_role_check");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS user_accounts ADD COLUMN IF NOT EXISTS active boolean");
+        jdbcTemplate.execute("UPDATE user_accounts SET role = 'CUSTOMER' WHERE role = 'USER'");
         jdbcTemplate.execute("UPDATE user_accounts SET active = true WHERE active IS NULL");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS user_accounts ALTER COLUMN active SET DEFAULT true");
     }
@@ -67,7 +68,7 @@ public class RoleDatabaseInitializer implements CommandLineRunner {
     private void seedRoles() {
         insertRole(UserRole.SUPER_ADMINISTRATOR, "Super Administrator", "Full system control across all terminals and companies.", "/admin");
         insertRole(UserRole.BUS_COMPANY_ADMINISTRATOR, "Bus Company Administrator", "Controls luggage and fleet operations for one bus company.", "/company");
-        insertRole(UserRole.TERMINAL_OFFICER, "Terminal Officer", "Registers, scans, verifies, and releases luggage at assigned terminals.", "/terminal");
+        insertRole(UserRole.TERMINAL_OFFICER, "Terminal Officer", "Registers, scans, verifies, and releases luggage at assigned terminals.", "/officer");
         insertRole(UserRole.CUSTOMER, "Customer", "Tracks personal luggage, payments, notifications, and pickup PINs.", "/customer");
     }
 

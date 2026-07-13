@@ -8,6 +8,7 @@ export function Dashboard({ rows, stats, onNavigate, now, user }) {
   const pendingPickup = dashboardRows.filter((row) => row.status === 'Pending Pickup').length + 44;
   const revenueNumber = dashboardRows.reduce((sum, row) => sum + Number(row.amount || 0), 1900000);
   const revenue = stats?.revenue ? `TSh ${Number(stats.revenue).toLocaleString()}` : `TSh ${(revenueNumber / 1000000).toFixed(1)}M`;
+  const newLuggagePage = user?.role === 'CUSTOMER' ? 'register' : 'weigh';
 
   if (user?.role === 'SUPER_ADMINISTRATOR') {
     return <RoleDashboard title="System Control Center" subtitle="System-wide security, operations, payments, and integrations" stats={[
@@ -37,7 +38,7 @@ export function Dashboard({ rows, stats, onNavigate, now, user }) {
     <div className="dashboard-page narrow">
       <div className="page-title-row">
         <div><h1>Overview Dashboard</h1><p>{now.toLocaleDateString([], { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })} - Dar es Salaam Terminal</p></div>
-        <button className="solid-button" onClick={() => onNavigate('weigh')}><Plus size={18} />New Luggage</button>
+        <button className="solid-button" onClick={() => onNavigate(newLuggagePage)}><Plus size={18} />New Luggage</button>
       </div>
       <div className="stats-row">
         <Stat icon={<Package />} label="LUGGAGE TODAY" value={total} note="+12 from yesterday" />

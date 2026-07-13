@@ -1,7 +1,7 @@
 import { Bell, ChevronRight, LogOut, Search } from 'lucide-react';
 import { initials } from '../../models/luggageModels.jsx';
 
-export function PageHeader({ screen, search, setSearch, now, apiOnline, user, onLogout }) {
+export function PageHeader({ screen, search, setSearch, now, apiOnline, user, unreadCount, onNavigate, onLogout }) {
   const labels = {
     dashboard: 'Overview',
     weigh: 'Weigh Luggage',
@@ -16,6 +16,7 @@ export function PageHeader({ screen, search, setSearch, now, apiOnline, user, on
     admin: 'Admin',
     reports: 'Reports'
   };
+  const profileTarget = user?.role === 'CUSTOMER' ? 'account' : user?.role === 'SUPER_ADMINISTRATOR' ? 'admin' : 'dashboard';
 
   return (
     <section className="page-header">
@@ -24,9 +25,11 @@ export function PageHeader({ screen, search, setSearch, now, apiOnline, user, on
         <label className="search-box"><Search size={18} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search luggage ID..." /></label>
         <span className={`api-chip ${apiOnline ? 'online' : ''}`}>{apiOnline ? 'API Live' : 'Demo Mode'}</span>
         <span className="clock-chip">{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-        <button className="bell-button"><Bell size={21} /><span /></button>
-        <div className="top-avatar">{initials(user?.fullName)}</div>
-        <strong>{user?.fullName?.split(' ')[0]}</strong>
+        <button className="bell-button" onClick={() => onNavigate('notifications')} title="Open notifications"><Bell size={21} />{unreadCount > 0 && <span>{unreadCount}</span>}</button>
+        <button className="header-user-button" onClick={() => onNavigate(profileTarget)} title="Open account details">
+          <span className="top-avatar">{initials(user?.fullName)}</span>
+          <strong>{user?.fullName?.split(' ')[0]}</strong>
+        </button>
         <button className="mini-logout" onClick={onLogout}><LogOut size={17} /></button>
       </div>
       <div className="terminal-strip"><span /><span /><span /></div>

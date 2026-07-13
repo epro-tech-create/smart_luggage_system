@@ -23,12 +23,143 @@ const emptyRegistrationForm = {
   fragile: false
 };
 
+const roleHomePath = {
+  SUPER_ADMINISTRATOR: '/admin',
+  BUS_COMPANY_ADMINISTRATOR: '/company',
+  TERMINAL_OFFICER: '/officer',
+  CUSTOMER: '/customer'
+};
+
+const roleDefaultScreen = {
+  SUPER_ADMINISTRATOR: 'admin',
+  BUS_COMPANY_ADMINISTRATOR: 'dashboard',
+  TERMINAL_OFFICER: 'dashboard',
+  CUSTOMER: 'dashboard'
+};
+
+const routeByRole = {
+  SUPER_ADMINISTRATOR: {
+    admin: '/admin',
+    dashboard: '/admin/dashboard',
+    reports: '/admin/reports',
+    notifications: '/admin/notifications'
+  },
+  BUS_COMPANY_ADMINISTRATOR: {
+    dashboard: '/company',
+    tracking: '/company/tracking',
+    verify: '/company/verify',
+    reports: '/company/reports',
+    notifications: '/company/notifications'
+  },
+  TERMINAL_OFFICER: {
+    dashboard: '/officer',
+    weigh: '/officer/weigh',
+    register: '/officer/register',
+    verify: '/officer/verify',
+    pickup: '/officer/pickup',
+    notifications: '/officer/notifications'
+  },
+  CUSTOMER: {
+    dashboard: '/customer',
+    register: '/customer/register',
+    payment: '/customer/payment',
+    tracking: '/customer/tracking',
+    account: '/customer/account',
+    notifications: '/customer/notifications'
+  }
+};
+
+function roleForPath(pathname = window.location.pathname) {
+  if (pathname.startsWith('/admin')) return 'SUPER_ADMINISTRATOR';
+  if (pathname.startsWith('/company')) return 'BUS_COMPANY_ADMINISTRATOR';
+  if (pathname.startsWith('/officer')) return 'TERMINAL_OFFICER';
+  if (pathname.startsWith('/customer')) return 'CUSTOMER';
+  return null;
+}
+
+function screenFromPath(role, pathname = window.location.pathname) {
+  const routes = routeByRole[role] || {};
+  return Object.entries(routes).find(([, path]) => path === pathname)?.[0] || null;
+}
+
+function pathForScreen(role, screen) {
+  return routeByRole[role]?.[screen] || roleHomePath[role] || '/customer';
+}
+
+function permittedScreenForPath(role, pathname = window.location.pathname) {
+  const requestedRole = roleForPath(pathname);
+  if (requestedRole && requestedRole !== role) return null;
+  return screenFromPath(role, pathname);
+}
+
+function defaultScreenForRole(role) {
+  return roleDefaultScreen[role] || 'dashboard';
+}
+
+function notificationsFromRows(rows, apiOnline) {
+  const rowNotifications = rows.flatMap((row) => {
+    const id = row.trackingCode || row.id;
+    if (row.status === 'Pending Pickup') {
+      return [{
+        id: `${id}-pickup`,
+        type: 'Arrival',
+        title: 'Luggage Ready for Pickup',
+        text: `${row.id} has arrived on ${row.route}. Pickup PIN is required.`,
+        time: row.time || 'Now'
+      }];
+    }
+    if (row.status === 'Misplaced') {
+      return [{
+        id: `${id}-misplaced`,
+        type: 'Alert',
+        title: 'Route Exception',
+        text: `${row.id} was detected away from its planned route.`,
+        time: row.time || 'Now'
+      }];
+    }
+    if (row.status === 'Registered' || row.status === 'Pending Payment') {
+      return [{
+        id: `${id}-payment`,
+        type: 'Payment',
+        title: 'Payment Required',
+        text: `${row.id} is registered. Complete payment to activate tracking.`,
+        time: row.time || 'Now'
+      }];
+    }
+    if (row.status === 'In Transit') {
+      return [{
+        id: `${id}-transit`,
+        type: 'Arrival',
+        title: 'Luggage In Transit',
+        text: `${row.id} is moving on ${row.bus} via ${row.route}.`,
+        time: row.time || 'Now'
+      }];
+    }
+    return [];
+  });
+
+  if (!apiOnline) {
+    return [{
+      id: 'system-api-offline',
+      type: 'System',
+      title: 'Backend Offline',
+      text: 'Live data is unavailable. Start the backend to sync records.',
+      time: 'Now'
+    }, ...rowNotifications];
+  }
+
+  return rowNotifications;
+}
+
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => readStoredAuth());
   const [authMode, setAuthMode] = useState('login');
   const [authError, setAuthError] = useState('');
   const [authForm, setAuthForm] = useState({ fullName: '', email: '', phoneNumber: '', password: '', selectedRole: 'CUSTOMER' });
-  const [screen, setScreen] = useState('dashboard');
+  const [screen, setScreen] = useState(() => {
+    const stored = readStoredAuth();
+    return stored?.role ? (permittedScreenForPath(stored.role) || defaultScreenForRole(stored.role)) : 'dashboard';
+  });
   const [rows, setRows] = useState(demoRows);
   const [apiRows, setApiRows] = useState([]);
   const [apiStats, setApiStats] = useState(null);
@@ -44,7 +175,9 @@ export default function App() {
   const [manualCode, setManualCode] = useState('');
   const [pin, setPin] = useState('');
   const [notificationFilter, setNotificationFilter] = useState('All');
+  const [readNotificationIds, setReadNotificationIds] = useState([]);
   const [toast, setToast] = useState('');
+  const [accountSaving, setAccountSaving] = useState(false);
   const [now, setNow] = useState(new Date());
   const [livePulse, setLivePulse] = useState(0);
   const [form, setForm] = useState(emptyRegistrationForm);
@@ -55,12 +188,36 @@ export default function App() {
   }, [currentUser]);
 
   useEffect(() => {
+    if (!currentUser?.role) return;
+    const syncScreenFromLocation = () => {
+      const requestedRole = roleForPath();
+      const permittedScreen = permittedScreenForPath(currentUser.role);
+      if (permittedScreen) {
+        setScreen(permittedScreen);
+        return;
+      }
+      const nextScreen = defaultScreenForRole(currentUser.role);
+      setScreen(nextScreen);
+      window.history.replaceState({}, '', pathForScreen(currentUser.role, nextScreen));
+      if (requestedRole && requestedRole !== currentUser.role) {
+        setToast('That page is only available for its assigned role.');
+      }
+    };
+    syncScreenFromLocation();
+    window.addEventListener('popstate', syncScreenFromLocation);
+    return () => window.removeEventListener('popstate', syncScreenFromLocation);
+  }, [currentUser?.role]);
+
+  useEffect(() => {
     if (!currentUser?.token) return;
     apiRequest('/auth/me')
       .then((user) => {
         const auth = { ...user, token: user.token || currentUser.token };
         setCurrentUser(auth);
         saveStoredAuth(auth);
+        const nextScreen = permittedScreenForPath(auth.role) || defaultScreenForRole(auth.role);
+        setScreen(nextScreen);
+        window.history.replaceState({}, '', pathForScreen(auth.role, nextScreen));
       })
       .catch(() => logout());
   }, []);
@@ -116,7 +273,7 @@ export default function App() {
   }
 
   const backendRows = useMemo(() => mapApiRows(apiRows), [apiRows]);
-  const appRows = backendRows.length ? backendRows : rows;
+  const appRows = currentUser?.role === 'CUSTOMER' ? backendRows : (backendRows.length ? backendRows : rows);
   const totalDue = useMemo(() => Math.round(weight * 600 + weight * 6 + 500), [weight]);
   const activeRow = appRows.find((row) => row.trackingCode === selectedTrackingCode)
     || appRows.find((row) => row.status === 'Pending Pickup' || row.status === 'Arrived')
@@ -131,6 +288,11 @@ export default function App() {
     const term = search.toLowerCase();
     return appRows.filter((row) => `${row.id} ${row.passenger} ${row.rfid}`.toLowerCase().includes(term));
   }, [appRows, search]);
+  const notifications = useMemo(() => notificationsFromRows(appRows, apiOnline).map((note) => ({
+    ...note,
+    unread: !readNotificationIds.includes(note.id)
+  })), [appRows, apiOnline, readNotificationIds]);
+  const unreadCount = notifications.filter((note) => note.unread).length;
 
   async function submitAuth(event) {
     event.preventDefault();
@@ -144,7 +306,9 @@ export default function App() {
       setCurrentUser(auth);
       saveStoredAuth(auth);
       setToast(`Welcome, ${auth.fullName}`);
-      setScreen('dashboard');
+      const nextScreen = defaultScreenForRole(auth.role);
+      setScreen(nextScreen);
+      window.history.replaceState({}, '', pathForScreen(auth.role, nextScreen));
     } catch (error) {
       setAuthError(error.message);
     }
@@ -157,6 +321,7 @@ export default function App() {
     setApiRows([]);
     setApiStats(null);
     setApiOnline(false);
+    window.history.replaceState({}, '', '/');
   }
 
   function navigate(next) {
@@ -171,7 +336,24 @@ export default function App() {
       return;
     }
     setScreen(next);
+    window.history.pushState({}, '', pathForScreen(currentUser.role, next));
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function updateAccount(payload) {
+    setAccountSaving(true);
+    try {
+      const updated = await apiRequest('/auth/me', { method: 'PUT', body: JSON.stringify(payload) });
+      const auth = { ...updated, token: updated.token || currentUser.token };
+      setCurrentUser(auth);
+      saveStoredAuth(auth);
+      setToast('Account updated successfully.');
+    } catch (error) {
+      setToast(error.message);
+      throw error;
+    } finally {
+      setAccountSaving(false);
+    }
   }
 
   async function registerLuggage(event) {
@@ -283,9 +465,9 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <Sidebar active={screen} onNavigate={navigate} unreadCount={appRows.filter((row) => row.status === 'Pending Pickup' || row.status === 'Arrived').length + 2} user={currentUser} onLogout={logout} />
+      <Sidebar active={screen} onNavigate={navigate} unreadCount={unreadCount} user={currentUser} onLogout={logout} />
       <div className="main-column">
-        <PageHeader screen={screen} search={search} setSearch={setSearch} now={now} apiOnline={apiOnline} user={currentUser} onLogout={logout} />
+        <PageHeader screen={screen} search={search} setSearch={setSearch} now={now} apiOnline={apiOnline} user={currentUser} unreadCount={unreadCount} onNavigate={navigate} onLogout={logout} />
         <main className="content-area">
           {screen === 'dashboard' && <Dashboard rows={visibleRows} stats={apiStats} onNavigate={navigate} now={now} user={currentUser} />}
           {screen === 'weigh' && <WeighScreen weight={weight} setWeight={setWeight} category={category} setCategory={setCategory} totalDue={totalDue} onNavigate={navigate} />}
@@ -295,8 +477,8 @@ export default function App() {
           {screen === 'tracking' && <TrackingScreen livePulse={livePulse} />}
           {screen === 'verify' && <VerifyScreen manualCode={manualCode} setManualCode={setManualCode} onVerify={verifyCode} />}
           {screen === 'pickup' && <PickupScreen row={activeRow} pin={pin} setPin={setPin} addPinDigit={addPinDigit} deletePinDigit={deletePinDigit} />}
-          {screen === 'notifications' && <NotificationsScreen filter={notificationFilter} setFilter={setNotificationFilter} />}
-          {screen === 'account' && <AccountScreen user={currentUser} rows={appRows} />}
+          {screen === 'notifications' && <NotificationsScreen filter={notificationFilter} setFilter={setNotificationFilter} notifications={notifications} onRead={(id) => setReadNotificationIds((ids) => ids.includes(id) ? ids : [...ids, id])} onReadAll={() => setReadNotificationIds(notifications.map((note) => note.id))} />}
+          {screen === 'account' && <AccountScreen user={currentUser} rows={appRows} onSave={updateAccount} saving={accountSaving} />}
           {screen === 'admin' && <AdminScreen overview={adminOverview} />}
           {screen === 'reports' && <ReportsScreen />}
         </main>
