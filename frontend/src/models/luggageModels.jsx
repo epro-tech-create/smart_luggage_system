@@ -55,7 +55,9 @@ export const roleLabels = {
 export const navByRole = {
   SUPER_ADMINISTRATOR: [
     { key: 'dashboard', label: 'System Dashboard', icon: Home },
-    { key: 'admin', label: 'Users & System', icon: Grid2X2 },
+    { key: 'admin', label: 'Admin Overview', icon: Grid2X2 },
+    { key: 'users', label: 'Users', icon: User },
+    { key: 'luggage', label: 'Luggage Records', icon: Box },
     { key: 'reports', label: 'Global Reports', icon: BarChart3 },
     { key: 'notifications', label: 'Security Alerts', icon: Bell, count: 3 }
   ],
@@ -89,19 +91,27 @@ export function mapApiRows(apiRows) {
     id: row.trackingCode,
     trackingCode: row.trackingCode,
     passenger: row.senderName,
+    senderName: row.senderName,
+    senderPhone: row.senderPhone,
+    receiverName: row.receiverName,
+    receiverPhone: row.receiverPhone,
     route: `${row.originTerminal} -> ${row.destinationTerminal}`,
     weight: row.weightKg,
+    weightKg: row.weightKg,
     bus: row.busNumber || 'Not assigned',
+    busNumber: row.busNumber || '',
     status: formatStatus(row.status),
     amount: row.cost,
     time: new Date(row.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     rfid: row.rfidTag,
     pin: row.pickupPin,
-    receiverPhone: row.receiverPhone,
     ownerEmail: row.ownerEmail,
+    busCompany: row.busCompany,
     currentTerminal: row.currentTerminal,
     originTerminal: row.originTerminal,
     destinationTerminal: row.destinationTerminal,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
     timeline: row.timeline || []
   }));
 }

@@ -8,7 +8,7 @@ import { AuthScreen } from './components/auth/AuthScreen.jsx';
 import { Dashboard } from './pages/Dashboard.jsx';
 import { WeighScreen, ConfirmScreen, RegisterScreen, PaymentScreen } from './pages/WorkflowPages.jsx';
 import { TrackingScreen, VerifyScreen, PickupScreen } from './pages/TrackingPages.jsx';
-import { AccountScreen, AdminScreen, NotificationsScreen, ReportsScreen } from './pages/AdminPages.jsx';
+import { AccountScreen, AdminScreen, CompanyOrdersScreen, NotificationsScreen, ReportsScreen } from './pages/AdminPages.jsx';
 
 const emptyRegistrationForm = {
   passenger: '',
@@ -40,6 +40,8 @@ const roleDefaultScreen = {
 const routeByRole = {
   SUPER_ADMINISTRATOR: {
     admin: '/admin',
+    users: '/admin/users',
+    luggage: '/admin/luggage',
     dashboard: '/admin/dashboard',
     reports: '/admin/reports',
     notifications: '/admin/notifications'
@@ -152,7 +154,7 @@ function notificationsFromRows(rows, apiOnline) {
 }
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(() => readStoredAuth());
+  const [currentUser, setCurrentUser] = useState(() => window.location.pathname === '/' ? null : readStoredAuth());
   const [authMode, setAuthMode] = useState('login');
   const [authError, setAuthError] = useState('');
   const [authForm, setAuthForm] = useState({ fullName: '', email: '', phoneNumber: '', password: '', selectedRole: 'CUSTOMER' });
@@ -178,11 +180,17 @@ export default function App() {
   const [readNotificationIds, setReadNotificationIds] = useState([]);
   const [toast, setToast] = useState('');
   const [accountSaving, setAccountSaving] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => window.localStorage.getItem('safiri_theme') === 'dark');
   const [now, setNow] = useState(new Date());
   const [livePulse, setLivePulse] = useState(0);
   const [form, setForm] = useState(emptyRegistrationForm);
 
   useEffect(() => {
+    if (window.location.pathname === '/') {
+      clearStoredAuth();
+      setCurrentUser(null);
+      return;
+    }
     if (!currentUser?.token) return;
     loadBackendData();
   }, [currentUser]);
@@ -223,9 +231,13 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    window.localStorage.setItem('safiri_theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
+
+  useEffect(() => {
     if (currentUser?.role !== 'SUPER_ADMINISTRATOR') {
       setAdminOverview(null);
-      if (screen === 'admin') setScreen('dashboard');
+      if (['admin', 'users', 'luggage'].includes(screen)) setScreen('dashboard');
       return;
     }
     apiRequest('/admin/overview')
@@ -326,7 +338,7 @@ export default function App() {
 
   function navigate(next) {
     const permitted = new Set({
-      SUPER_ADMINISTRATOR: ['dashboard', 'admin', 'reports', 'notifications'],
+      SUPER_ADMINISTRATOR: ['dashboard', 'admin', 'users', 'luggage', 'reports', 'notifications'],
       BUS_COMPANY_ADMINISTRATOR: ['dashboard', 'tracking', 'verify', 'reports', 'notifications'],
       TERMINAL_OFFICER: ['dashboard', 'weigh', 'register', 'verify', 'pickup', 'notifications'],
       CUSTOMER: ['dashboard', 'register', 'payment', 'tracking', 'account', 'notifications']
@@ -464,23 +476,26 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${darkMode ? 'dark-mode' : ''}`}>
       <Sidebar active={screen} onNavigate={navigate} unreadCount={unreadCount} user={currentUser} onLogout={logout} />
       <div className="main-column">
-        <PageHeader screen={screen} search={search} setSearch={setSearch} now={now} apiOnline={apiOnline} user={currentUser} unreadCount={unreadCount} onNavigate={navigate} onLogout={logout} />
+        <PageHeader screen={screen} search={search} setSearch={setSearch} now={now} apiOnline={apiOnline} user={currentUser} unreadCount={unreadCount} darkMode={darkMode} setDarkMode={setDarkMode} onNavigate={navigate} onLogout={logout} />
         <main className="content-area">
           {screen === 'dashboard' && <Dashboard rows={visibleRows} stats={apiStats} onNavigate={navigate} now={now} user={currentUser} />}
           {screen === 'weigh' && <WeighScreen weight={weight} setWeight={setWeight} category={category} setCategory={setCategory} totalDue={totalDue} onNavigate={navigate} />}
           {screen === 'confirm' && <ConfirmScreen weight={weight} category={category} totalDue={totalDue} confirmed={confirmed} setConfirmed={setConfirmed} onNavigate={navigate} />}
           {screen === 'register' && <RegisterScreen form={form} setForm={setForm} weight={weight} category={category} totalDue={totalDue} onSubmit={registerLuggage} onNavigate={navigate} />}
           {screen === 'payment' && <PaymentScreen row={paymentRow} provider={provider} setProvider={setProvider} phone={phone} setPhone={setPhone} totalDue={totalDue} onPay={confirmPayment} />}
-          {screen === 'tracking' && <TrackingScreen livePulse={livePulse} />}
+          {screen === 'tracking' && currentUser.role === 'BUS_COMPANY_ADMINISTRATOR' && <CompanyOrdersScreen rows={appRows} onRefresh={refreshBackendData} />}
+          {screen === 'tracking' && currentUser.role !== 'BUS_COMPANY_ADMINISTRATOR' && <TrackingScreen livePulse={livePulse} />}
           {screen === 'verify' && <VerifyScreen manualCode={manualCode} setManualCode={setManualCode} onVerify={verifyCode} />}
           {screen === 'pickup' && <PickupScreen row={activeRow} pin={pin} setPin={setPin} addPinDigit={addPinDigit} deletePinDigit={deletePinDigit} />}
           {screen === 'notifications' && <NotificationsScreen filter={notificationFilter} setFilter={setNotificationFilter} notifications={notifications} onRead={(id) => setReadNotificationIds((ids) => ids.includes(id) ? ids : [...ids, id])} onReadAll={() => setReadNotificationIds(notifications.map((note) => note.id))} />}
           {screen === 'account' && <AccountScreen user={currentUser} rows={appRows} onSave={updateAccount} saving={accountSaving} />}
-          {screen === 'admin' && <AdminScreen overview={adminOverview} />}
-          {screen === 'reports' && <ReportsScreen />}
+          {screen === 'admin' && <AdminScreen overview={adminOverview} mode="overview" />}
+          {screen === 'users' && <AdminScreen overview={adminOverview} mode="users" />}
+          {screen === 'luggage' && <AdminScreen overview={adminOverview} mode="luggage" />}
+          {screen === 'reports' && <ReportsScreen rows={appRows} stats={apiStats} user={currentUser} />}
         </main>
       </div>
       {toast && <button className="toast" onClick={() => setToast('')}><CheckCircle2 size={20} />{toast}</button>}

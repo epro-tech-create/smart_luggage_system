@@ -114,6 +114,78 @@ p {
   min-height: 100vh;
 }
 
+.app-shell.dark-mode {
+  --page: #07120c;
+  --line: #1e3527;
+  --muted: #9eb4a5;
+  --green-soft: #102819;
+  color: #edf8f0;
+  background: var(--page);
+}
+
+.dark-mode .main-column,
+.dark-mode .content-area {
+  background: #07120c;
+}
+
+.dark-mode .page-header,
+.dark-mode .card,
+.dark-mode .stat-box,
+.dark-mode .management-form,
+.dark-mode .management-table,
+.dark-mode .notification-card,
+.dark-mode .auth-card {
+  border-color: #24412d;
+  color: #edf8f0;
+  background: #0c1b12;
+}
+
+.dark-mode .page-title-row p,
+.dark-mode .center-title p,
+.dark-mode .breadcrumb,
+.dark-mode .notification-card p,
+.dark-mode .management-table td small,
+.dark-mode .account-empty,
+.dark-mode .account-contact-strip {
+  color: #9eb4a5;
+}
+
+.dark-mode .breadcrumb strong,
+.dark-mode .page-title-row h1,
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode strong {
+  color: #f5fff7;
+}
+
+.dark-mode .search-box,
+.dark-mode .clock-chip,
+.dark-mode .api-chip,
+.dark-mode .form-field input,
+.dark-mode .form-field select,
+.dark-mode .management-form input,
+.dark-mode .management-form select,
+.dark-mode .account-contact-strip {
+  border-color: #24412d;
+  color: #edf8f0;
+  background: #102519;
+}
+
+.dark-mode .search-box input {
+  color: #edf8f0;
+}
+
+.dark-mode .ghost-button,
+.dark-mode .outline-green,
+.dark-mode .report-tabs button,
+.dark-mode .filter-row button,
+.dark-mode .management-tabs button {
+  border-color: #24412d;
+  color: #edf8f0;
+  background: #102519;
+}
+
 .auth-page {
   min-height: 100vh;
   display: grid;
@@ -500,6 +572,17 @@ p {
   padding: 8px 16px 8px 4px;
   color: #455447;
   background: transparent;
+}
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--green);
+  background: var(--green-soft);
 }
 
 .bell-button span {
@@ -1370,6 +1453,126 @@ input[type="range"] {
   margin: 0;
   font-size: 13px;
   line-height: 1.55;
+}
+
+.management-tabs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -4px 0 18px;
+}
+
+.management-tabs button {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 16px;
+  background: #fff;
+}
+
+.management-tabs button.active {
+  border-color: var(--green);
+  color: #fff;
+  background: var(--green);
+}
+
+.management-tabs span {
+  margin-left: auto;
+  color: var(--green);
+  font-size: 13px;
+}
+
+.management-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.management-grid.company-orders {
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+}
+
+.management-grid.company-orders > .management-table:first-child,
+.management-grid.company-orders > .management-table:only-child {
+  grid-column: 1 / -1;
+}
+
+.management-form {
+  display: grid;
+  gap: 11px;
+  padding: 20px;
+}
+
+.management-form h2,
+.management-table h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+
+.management-form input,
+.management-form select {
+  min-height: 42px;
+  border: 1px solid #d4ddd6;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #f2f7f3;
+}
+
+.mini-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.management-table {
+  overflow: auto;
+  padding: 18px;
+}
+
+.management-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.management-table th,
+.management-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 12px 8px;
+  text-align: left;
+  vertical-align: top;
+  font-size: 13px;
+}
+
+.management-table td small {
+  display: block;
+  margin-top: 3px;
+  color: #6b7d70;
+}
+
+.management-table td:last-child {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.management-table td:last-child button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--green);
+  background: #fff;
+}
+
+.management-table td:last-child button:last-child {
+  color: var(--red);
 }
 
 .toggle-row {
@@ -2433,6 +2636,8 @@ input[type="range"] {
   .reports-grid,
   .admin-grid,
   .account-layout,
+  .management-grid,
+  .management-grid.company-orders,
   .tracking-layout {
     grid-template-columns: 1fr;
   }

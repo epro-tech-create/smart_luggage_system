@@ -1,7 +1,7 @@
-import { Bell, ChevronRight, LogOut, Search } from 'lucide-react';
+import { Bell, ChevronRight, LogOut, Moon, Search, Sun } from 'lucide-react';
 import { initials } from '../../models/luggageModels.jsx';
 
-export function PageHeader({ screen, search, setSearch, now, apiOnline, user, unreadCount, onNavigate, onLogout }) {
+export function PageHeader({ screen, search, setSearch, now, apiOnline, user, unreadCount, darkMode, setDarkMode, onNavigate, onLogout }) {
   const labels = {
     dashboard: 'Overview',
     weigh: 'Weigh Luggage',
@@ -14,6 +14,8 @@ export function PageHeader({ screen, search, setSearch, now, apiOnline, user, un
     notifications: 'Notifications',
     account: 'My Luggage',
     admin: 'Admin',
+    users: 'Users',
+    luggage: 'Luggage Records',
     reports: 'Reports'
   };
   const profileTarget = user?.role === 'CUSTOMER' ? 'account' : user?.role === 'SUPER_ADMINISTRATOR' ? 'admin' : 'dashboard';
@@ -25,6 +27,7 @@ export function PageHeader({ screen, search, setSearch, now, apiOnline, user, un
         <label className="search-box"><Search size={18} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search luggage ID..." /></label>
         <span className={`api-chip ${apiOnline ? 'online' : ''}`}>{apiOnline ? 'API Live' : 'Demo Mode'}</span>
         <span className="clock-chip">{now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)} title="Toggle dark mode">{darkMode ? <Sun size={18} /> : <Moon size={18} />}</button>
         <button className="bell-button" onClick={() => onNavigate('notifications')} title="Open notifications"><Bell size={21} />{unreadCount > 0 && <span>{unreadCount}</span>}</button>
         <button className="header-user-button" onClick={() => onNavigate(profileTarget)} title="Open account details">
           <span className="top-avatar">{initials(user?.fullName)}</span>

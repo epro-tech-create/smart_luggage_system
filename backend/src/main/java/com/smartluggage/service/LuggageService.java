@@ -6,6 +6,7 @@ import com.smartluggage.dto.MoveLuggageRequest;
 import com.smartluggage.dto.PaymentRequest;
 import com.smartluggage.dto.PickupVerificationRequest;
 import com.smartluggage.dto.RegisterLuggageRequest;
+import com.smartluggage.dto.UpdateLuggageRequest;
 import com.smartluggage.model.EventType;
 import com.smartluggage.model.Luggage;
 import com.smartluggage.model.LuggageStatus;
@@ -119,6 +120,38 @@ public class LuggageService {
                 .or(() -> luggageRepository.findByRfidTagIgnoreCase(code))
                 .map(luggageMapper::toResponse)
                 .orElseThrow(() -> new EntityNotFoundException("Luggage not found: " + code));
+    }
+
+    @Transactional
+    public LuggageResponse update(String trackingCode, UpdateLuggageRequest request, boolean allowScopeChange) {
+        Luggage luggage = getByTrackingCode(trackingCode);
+        luggage.setSenderName(request.senderName());
+        luggage.setSenderPhone(request.senderPhone());
+        luggage.setReceiverName(request.receiverName());
+        luggage.setReceiverPhone(request.receiverPhone());
+        luggage.setOriginTerminal(request.originTerminal());
+        luggage.setDestinationTerminal(request.destinationTerminal());
+        luggage.setCurrentTerminal(request.currentTerminal() == null || request.currentTerminal().isBlank()
+                ? request.originTerminal()
+                : request.currentTerminal());
+        luggage.setWeightKg(request.weightKg());
+        luggage.setCost(baseFee.add(ratePerKg.multiply(BigDecimal.valueOf(request.weightKg()))));
+        luggage.setBusNumber(request.busNumber());
+        if (allowScopeChange) {
+            luggage.setOwnerEmail(request.ownerEmail());
+            luggage.setBusCompany(request.busCompany());
+        }
+        if (request.status() != null) {
+            luggage.setStatus(request.status());
+        }
+        luggage.touch();
+        return luggageMapper.toResponse(luggageRepository.save(luggage));
+    }
+
+    @Transactional
+    public void delete(String trackingCode) {
+        Luggage luggage = getByTrackingCode(trackingCode);
+        luggageRepository.delete(luggage);
     }
 
     @Transactional

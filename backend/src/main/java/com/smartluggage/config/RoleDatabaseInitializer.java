@@ -27,6 +27,9 @@ public class RoleDatabaseInitializer implements CommandLineRunner {
     private void repairUserAccountSchema() {
         jdbcTemplate.execute("ALTER TABLE IF EXISTS user_accounts DROP CONSTRAINT IF EXISTS user_accounts_role_check");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS user_accounts ADD COLUMN IF NOT EXISTS active boolean");
+        jdbcTemplate.execute("UPDATE user_accounts SET role = 'SUPER_ADMINISTRATOR' WHERE role = 'ADMIN'");
+        jdbcTemplate.execute("UPDATE user_accounts SET role = 'TERMINAL_OFFICER' WHERE role = 'OFFICER'");
+        jdbcTemplate.execute("UPDATE user_accounts SET role = 'BUS_COMPANY_ADMINISTRATOR' WHERE role = 'COMPANY_ADMIN'");
         jdbcTemplate.execute("UPDATE user_accounts SET role = 'CUSTOMER' WHERE role = 'USER'");
         jdbcTemplate.execute("UPDATE user_accounts SET active = true WHERE active IS NULL");
         jdbcTemplate.execute("ALTER TABLE IF EXISTS user_accounts ALTER COLUMN active SET DEFAULT true");

@@ -11,6 +11,7 @@ import com.smartluggage.model.UserAccount;
 import com.smartluggage.model.UserRole;
 import com.smartluggage.repository.LuggageRepository;
 import com.smartluggage.repository.UserAccountRepository;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
+    private static final Duration SESSION_TTL = Duration.ofHours(8);
     private final UserAccountRepository userAccountRepository;
     private final LuggageRepository luggageRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -79,7 +81,8 @@ public class AuthService {
         if (token == null) {
             return Optional.empty();
         }
-        return userAccountRepository.findBySessionToken(token);
+        return userAccountRepository.findBySessionToken(token)
+                .filter(user -> user.getTokenCreatedAt() != null && user.getTokenCreatedAt().plus(SESSION_TTL).isAfter(Instant.now()));
     }
 
     @Transactional(readOnly = true)

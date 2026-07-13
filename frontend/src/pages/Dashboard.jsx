@@ -4,9 +4,11 @@ import { Stat } from '../components/common/Stats.jsx';
 
 export function Dashboard({ rows, stats, onNavigate, now, user }) {
   const dashboardRows = rows;
-  const total = stats?.totalLuggage || 279 + rows.length;
-  const pendingPickup = dashboardRows.filter((row) => row.status === 'Pending Pickup').length + 44;
-  const revenueNumber = dashboardRows.reduce((sum, row) => sum + Number(row.amount || 0), 1900000);
+  const total = stats?.totalLuggage ?? rows.length;
+  const pendingPickup = dashboardRows.filter((row) => row.status === 'Pending Pickup').length;
+  const revenueNumber = dashboardRows
+    .filter((row) => ['Pending Dispatch', 'In Transit', 'Pending Pickup', 'Delivered'].includes(row.status))
+    .reduce((sum, row) => sum + Number(row.amount || 0), 0);
   const revenue = stats?.revenue ? `TSh ${Number(stats.revenue).toLocaleString()}` : `TSh ${(revenueNumber / 1000000).toFixed(1)}M`;
   const newLuggagePage = user?.role === 'CUSTOMER' ? 'register' : 'weigh';
 
